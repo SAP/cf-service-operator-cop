@@ -1,0 +1,16 @@
+admissionWebhookRuntimeVersion: v0.1.0
+controllerRuntimeVersion: v0.15.0
+envtestKubernetesVersion: 1.26.1
+goModule: github.com/sap/cf-service-operator-cop
+goVersion: "1.19"
+groupName: operator.kyma-project.io
+groupVersion: v1alpha1
+image: cf-service-operator-cop:latest
+kind: CFServiceOperator
+kubernetesVersion: v0.27.2
+mutatingWebhookEnabled: false
+operatorName: cf-service-operator-cop.cs.sap.com
+owner: SAP SE
+resource: cfserviceoperators
+validatingWebhookEnabled: false
+version: v0.1.4

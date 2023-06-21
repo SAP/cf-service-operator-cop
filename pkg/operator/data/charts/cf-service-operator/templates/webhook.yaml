@@ -1,0 +1,228 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: {{ include "cf-service-operator.fullname" . }}-mutate
+  labels:
+    {{- include "cf-service-operator.labels" . | nindent 4 }}
+  annotations:
+    cert-manager.io/inject-ca-from:  {{ .Release.Namespace }}/{{ include "cf-service-operator.fullname" . }}
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: {{ include "cf-service-operator.fullname" . }}-webhook
+      namespace: {{ .Release.Namespace }}
+      path: /mutate-cf-cs-sap-com-v1alpha1-clusterspace
+  failurePolicy: Fail
+  name: mutate-clusterspace.cf.cs.sap.com
+  rules:
+  - apiGroups:
+    - cf.cs.sap.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - clusterspaces
+  sideEffects: None
+  timeoutSeconds: 10
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: {{ include "cf-service-operator.fullname" . }}-webhook
+      namespace: {{ .Release.Namespace }}
+      path: /mutate-cf-cs-sap-com-v1alpha1-servicebinding
+  failurePolicy: Fail
+  name: mutate-servicebinding.cf.cs.sap.com
+  rules:
+  - apiGroups:
+    - cf.cs.sap.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - servicebindings
+  sideEffects: None
+  timeoutSeconds: 10
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: {{ include "cf-service-operator.fullname" . }}-webhook
+      namespace: {{ .Release.Namespace }}
+      path: /mutate-cf-cs-sap-com-v1alpha1-serviceinstance
+  failurePolicy: Fail
+  name: mutate-serviceinstance.cf.cs.sap.com
+  rules:
+  - apiGroups:
+    - cf.cs.sap.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - serviceinstances
+  sideEffects: None
+  timeoutSeconds: 10
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: {{ include "cf-service-operator.fullname" . }}-webhook
+      namespace: {{ .Release.Namespace }}
+      path: /mutate-cf-cs-sap-com-v1alpha1-space
+  failurePolicy: Fail
+  name: mutate-space.cf.cs.sap.com
+  rules:
+  - apiGroups:
+    - cf.cs.sap.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - spaces
+  sideEffects: None
+  timeoutSeconds: 10
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: {{ include "cf-service-operator.fullname" . }}-validate
+  labels:
+    {{- include "cf-service-operator.labels" . | nindent 4 }}
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "cf-service-operator.fullname" . }}
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: {{ include "cf-service-operator.fullname" . }}-webhook
+      namespace: {{ .Release.Namespace }}
+      path: /validate-cf-cs-sap-com-v1alpha1-clusterspace
+  failurePolicy: Fail
+  name: validate-clusterspace.cf.cs.sap.com
+  rules:
+  - apiGroups:
+    - cf.cs.sap.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - clusterspaces
+  sideEffects: None
+  timeoutSeconds: 10
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: {{ include "cf-service-operator.fullname" . }}-webhook
+      namespace: {{ .Release.Namespace }}
+      path: /validate-cf-cs-sap-com-v1alpha1-servicebinding
+  failurePolicy: Fail
+  name: validate-servicebinding.cf.cs.sap.com
+  rules:
+  - apiGroups:
+    - cf.cs.sap.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - servicebindings
+  sideEffects: None
+  timeoutSeconds: 10
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: {{ include "cf-service-operator.fullname" . }}-webhook
+      namespace: {{ .Release.Namespace }}
+      path: /validate-cf-cs-sap-com-v1alpha1-serviceinstance
+  failurePolicy: Fail
+  name: validate-serviceinstance.cf.cs.sap.com
+  rules:
+  - apiGroups:
+    - cf.cs.sap.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - serviceinstances
+  sideEffects: None
+  timeoutSeconds: 10
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: {{ include "cf-service-operator.fullname" . }}-webhook
+      namespace: {{ .Release.Namespace }}
+      path: /validate-cf-cs-sap-com-v1alpha1-space
+  failurePolicy: Fail
+  name: validate-space.cf.cs.sap.com
+  rules:
+  - apiGroups:
+    - cf.cs.sap.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - spaces
+  sideEffects: None
+  timeoutSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "cf-service-operator.fullname" . }}-webhook
+  labels:
+    {{- include "cf-service-operator.labels" . | nindent 4 }}
+spec:
+  ports:
+    - port: 443
+      protocol: TCP
+      targetPort: 9443
+  selector:
+    {{- include "cf-service-operator.selectorLabels" . | nindent 4 }}
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "cf-service-operator.fullname" . }}
+  labels:
+    {{- include "cf-service-operator.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "cf-service-operator.fullname" . }}
+  labels:
+    {{- include "cf-service-operator.labels" . | nindent 4 }}
+spec:
+  dnsNames:
+  - {{ include "cf-service-operator.fullname" . }}-webhook
+  - {{ include "cf-service-operator.fullname" . }}-webhook.{{ .Release.Namespace }}
+  - {{ include "cf-service-operator.fullname" . }}-webhook.{{ .Release.Namespace }}.svc
+  - {{ include "cf-service-operator.fullname" . }}-webhook.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: {{ include "cf-service-operator.fullname" . }}
+  secretName: {{ include "cf-service-operator.fullname" . }}-tls
