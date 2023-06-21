@@ -98,5 +98,5 @@ spec:
       - name: tls
         secret:
           defaultMode: 420
-          secretName: {{ include "cf-service-operator.fullname" . }}-tls
+          secretName: {{ include "cf-service-operator.fullname" . }}-{{ ternary "tls-managed" "tls" .Values.webhook.certManager.enabled }}
 

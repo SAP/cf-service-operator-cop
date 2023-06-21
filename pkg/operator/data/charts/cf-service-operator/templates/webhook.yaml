@@ -1,3 +1,66 @@
+{{- $caCert := "" }}
+{{- if .Values.webhook.certManager.enabled }}
+{{- if not .Values.webhook.certManager.issuerName }}
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "cf-service-operator.fullname" . }}
+  labels:
+    {{- include "cf-service-operator.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+{{- end }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "cf-service-operator.fullname" . }}
+  labels:
+    {{- include "cf-service-operator.labels" . | nindent 4 }}
+spec:
+  dnsNames:
+  - {{ include "cf-service-operator.fullname" . }}
+  - {{ include "cf-service-operator.fullname" . }}.{{ .Release.Namespace }}
+  - {{ include "cf-service-operator.fullname" . }}.{{ .Release.Namespace }}.svc
+  - {{ include "cf-service-operator.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    {{- if .Values.webhook.certManager.issuerName }}
+    {{- with .Values.webhook.certManager.issuerGroup }}
+    group: {{ . }}
+    {{- end }}
+    {{- with .Values.webhook.certManager.issuerKind }}
+    kind: {{ . }}
+    {{- end }}
+    name: {{ .Values.webhook.certManager.issuerName }}
+    {{- else }}
+    name: {{ include "cf-service-operator.fullname" . }}
+    {{- end }}
+  secretName: {{ include "cf-service-operator.fullname" . }}-tls-managed
+{{- else }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "cf-service-operator.fullname" . }}-tls
+  labels:
+    {{- include "cf-service-operator.labels" . | nindent 4 }}
+type: Opaque
+data:
+  {{- $data := (lookup "v1" "Secret" .Release.Namespace (printf "%s-tls" (include "cf-service-operator.fullname" .))).data }}
+  {{- if $data }}
+  {{ $data | toYaml | nindent 2 }}
+  {{- $caCert = index $data "ca.crt" }}
+  {{- else }}
+  {{- $cn := printf "%s.%s.svc" (include "cf-service-operator.fullname" .) .Release.Namespace }}
+  {{- $ca := genCA (printf "%s-ca" (include "cf-service-operator.fullname" .)) 36500 }}
+  {{- $cert := genSignedCert $cn nil (list $cn) 36500 $ca }}
+  ca.crt: {{ $ca.Cert | b64enc }}
+  tls.crt: {{ $cert.Cert | b64enc }}
+  tls.key: {{ $cert.Key | b64enc }}
+  {{- $caCert = $ca.Cert | b64enc }}
+  {{- end }}
+{{- end }}
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
@@ -5,14 +68,19 @@ metadata:
   name: {{ include "cf-service-operator.fullname" . }}-mutate
   labels:
     {{- include "cf-service-operator.labels" . | nindent 4 }}
+  {{- if .Values.webhook.certManager.enabled }}
   annotations:
     cert-manager.io/inject-ca-from:  {{ .Release.Namespace }}/{{ include "cf-service-operator.fullname" . }}
+  {{- end }}
 webhooks:
 - admissionReviewVersions:
   - v1
   clientConfig:
+    {{- if not .Values.webhook.certManager.enabled }}
+    caBundle: {{ $caCert }}
+    {{- end }}
     service:
-      name: {{ include "cf-service-operator.fullname" . }}-webhook
+      name: {{ include "cf-service-operator.fullname" . }}
       namespace: {{ .Release.Namespace }}
       path: /mutate-cf-cs-sap-com-v1alpha1-clusterspace
   failurePolicy: Fail
@@ -32,8 +100,11 @@ webhooks:
 - admissionReviewVersions:
   - v1
   clientConfig:
+    {{- if not .Values.webhook.certManager.enabled }}
+    caBundle: {{ $caCert }}
+    {{- end }}
     service:
-      name: {{ include "cf-service-operator.fullname" . }}-webhook
+      name: {{ include "cf-service-operator.fullname" . }}
       namespace: {{ .Release.Namespace }}
       path: /mutate-cf-cs-sap-com-v1alpha1-servicebinding
   failurePolicy: Fail
@@ -53,8 +124,11 @@ webhooks:
 - admissionReviewVersions:
   - v1
   clientConfig:
+    {{- if not .Values.webhook.certManager.enabled }}
+    caBundle: {{ $caCert }}
+    {{- end }}
     service:
-      name: {{ include "cf-service-operator.fullname" . }}-webhook
+      name: {{ include "cf-service-operator.fullname" . }}
       namespace: {{ .Release.Namespace }}
       path: /mutate-cf-cs-sap-com-v1alpha1-serviceinstance
   failurePolicy: Fail
@@ -74,8 +148,11 @@ webhooks:
 - admissionReviewVersions:
   - v1
   clientConfig:
+    {{- if not .Values.webhook.certManager.enabled }}
+    caBundle: {{ $caCert }}
+    {{- end }}
     service:
-      name: {{ include "cf-service-operator.fullname" . }}-webhook
+      name: {{ include "cf-service-operator.fullname" . }}
       namespace: {{ .Release.Namespace }}
       path: /mutate-cf-cs-sap-com-v1alpha1-space
   failurePolicy: Fail
@@ -99,14 +176,19 @@ metadata:
   name: {{ include "cf-service-operator.fullname" . }}-validate
   labels:
     {{- include "cf-service-operator.labels" . | nindent 4 }}
+  {{- if .Values.webhook.certManager.enabled }}
   annotations:
     cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "cf-service-operator.fullname" . }}
+  {{- end }}
 webhooks:
 - admissionReviewVersions:
   - v1
   clientConfig:
+    {{- if not .Values.webhook.certManager.enabled }}
+    caBundle: {{ $caCert }}
+    {{- end }}
     service:
-      name: {{ include "cf-service-operator.fullname" . }}-webhook
+      name: {{ include "cf-service-operator.fullname" . }}
       namespace: {{ .Release.Namespace }}
       path: /validate-cf-cs-sap-com-v1alpha1-clusterspace
   failurePolicy: Fail
@@ -126,8 +208,11 @@ webhooks:
 - admissionReviewVersions:
   - v1
   clientConfig:
+    {{- if not .Values.webhook.certManager.enabled }}
+    caBundle: {{ $caCert }}
+    {{- end }}
     service:
-      name: {{ include "cf-service-operator.fullname" . }}-webhook
+      name: {{ include "cf-service-operator.fullname" . }}
       namespace: {{ .Release.Namespace }}
       path: /validate-cf-cs-sap-com-v1alpha1-servicebinding
   failurePolicy: Fail
@@ -147,8 +232,11 @@ webhooks:
 - admissionReviewVersions:
   - v1
   clientConfig:
+    {{- if not .Values.webhook.certManager.enabled }}
+    caBundle: {{ $caCert }}
+    {{- end }}
     service:
-      name: {{ include "cf-service-operator.fullname" . }}-webhook
+      name: {{ include "cf-service-operator.fullname" . }}
       namespace: {{ .Release.Namespace }}
       path: /validate-cf-cs-sap-com-v1alpha1-serviceinstance
   failurePolicy: Fail
@@ -168,8 +256,11 @@ webhooks:
 - admissionReviewVersions:
   - v1
   clientConfig:
+    {{- if not .Values.webhook.certManager.enabled }}
+    caBundle: {{ $caCert }}
+    {{- end }}
     service:
-      name: {{ include "cf-service-operator.fullname" . }}-webhook
+      name: {{ include "cf-service-operator.fullname" . }}
       namespace: {{ .Release.Namespace }}
       path: /validate-cf-cs-sap-com-v1alpha1-space
   failurePolicy: Fail
@@ -186,43 +277,3 @@ webhooks:
     - spaces
   sideEffects: None
   timeoutSeconds: 10
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ include "cf-service-operator.fullname" . }}-webhook
-  labels:
-    {{- include "cf-service-operator.labels" . | nindent 4 }}
-spec:
-  ports:
-    - port: 443
-      protocol: TCP
-      targetPort: 9443
-  selector:
-    {{- include "cf-service-operator.selectorLabels" . | nindent 4 }}
----
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: {{ include "cf-service-operator.fullname" . }}
-  labels:
-    {{- include "cf-service-operator.labels" . | nindent 4 }}
-spec:
-  selfSigned: {}
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: {{ include "cf-service-operator.fullname" . }}
-  labels:
-    {{- include "cf-service-operator.labels" . | nindent 4 }}
-spec:
-  dnsNames:
-  - {{ include "cf-service-operator.fullname" . }}-webhook
-  - {{ include "cf-service-operator.fullname" . }}-webhook.{{ .Release.Namespace }}
-  - {{ include "cf-service-operator.fullname" . }}-webhook.{{ .Release.Namespace }}.svc
-  - {{ include "cf-service-operator.fullname" . }}-webhook.{{ .Release.Namespace }}.svc.cluster.local
-  issuerRef:
-    kind: Issuer
-    name: {{ include "cf-service-operator.fullname" . }}
-  secretName: {{ include "cf-service-operator.fullname" . }}-tls
