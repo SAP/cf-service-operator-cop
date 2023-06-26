@@ -95,7 +95,7 @@ jobs:
         if [ $errors -gt 0 ]; then
           exit 1
         fi
-        
+
     - name: Check that generated artifacts are up-to-date
       run: |
         make generate
