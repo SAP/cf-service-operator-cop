@@ -65,12 +65,12 @@ data:
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: {{ include "cf-service-operator.fullname" . }}-mutate
+  name: {{ include "cf-service-operator.fullname" . }}
   labels:
     {{- include "cf-service-operator.labels" . | nindent 4 }}
   {{- if .Values.webhook.certManager.enabled }}
   annotations:
-    cert-manager.io/inject-ca-from:  {{ .Release.Namespace }}/{{ include "cf-service-operator.fullname" . }}
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "cf-service-operator.fullname" . }}
   {{- end }}
 webhooks:
 - admissionReviewVersions:
@@ -83,8 +83,8 @@ webhooks:
       name: {{ include "cf-service-operator.fullname" . }}
       namespace: {{ .Release.Namespace }}
       path: /mutate-cf-cs-sap-com-v1alpha1-clusterspace
-  failurePolicy: Fail
-  name: mutate-clusterspace.cf.cs.sap.com
+      port: 443
+  name: mutate.clusterspaces.cf.cs.sap.com
   rules:
   - apiGroups:
     - cf.cs.sap.com
@@ -95,56 +95,12 @@ webhooks:
     - UPDATE
     resources:
     - clusterspaces
+    scope: Cluster
+  matchPolicy: Equivalent
   sideEffects: None
   timeoutSeconds: 10
-- admissionReviewVersions:
-  - v1
-  clientConfig:
-    {{- if not .Values.webhook.certManager.enabled }}
-    caBundle: {{ $caCert }}
-    {{- end }}
-    service:
-      name: {{ include "cf-service-operator.fullname" . }}
-      namespace: {{ .Release.Namespace }}
-      path: /mutate-cf-cs-sap-com-v1alpha1-servicebinding
   failurePolicy: Fail
-  name: mutate-servicebinding.cf.cs.sap.com
-  rules:
-  - apiGroups:
-    - cf.cs.sap.com
-    apiVersions:
-    - v1alpha1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - servicebindings
-  sideEffects: None
-  timeoutSeconds: 10
-- admissionReviewVersions:
-  - v1
-  clientConfig:
-    {{- if not .Values.webhook.certManager.enabled }}
-    caBundle: {{ $caCert }}
-    {{- end }}
-    service:
-      name: {{ include "cf-service-operator.fullname" . }}
-      namespace: {{ .Release.Namespace }}
-      path: /mutate-cf-cs-sap-com-v1alpha1-serviceinstance
-  failurePolicy: Fail
-  name: mutate-serviceinstance.cf.cs.sap.com
-  rules:
-  - apiGroups:
-    - cf.cs.sap.com
-    apiVersions:
-    - v1alpha1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - serviceinstances
-  sideEffects: None
-  timeoutSeconds: 10
+  reinvocationPolicy: Never
 - admissionReviewVersions:
   - v1
   clientConfig:
@@ -155,8 +111,8 @@ webhooks:
       name: {{ include "cf-service-operator.fullname" . }}
       namespace: {{ .Release.Namespace }}
       path: /mutate-cf-cs-sap-com-v1alpha1-space
-  failurePolicy: Fail
-  name: mutate-space.cf.cs.sap.com
+      port: 443
+  name: mutate.spaces.cf.cs.sap.com
   rules:
   - apiGroups:
     - cf.cs.sap.com
@@ -167,13 +123,73 @@ webhooks:
     - UPDATE
     resources:
     - spaces
+    scope: Namespaced
+  matchPolicy: Equivalent
   sideEffects: None
   timeoutSeconds: 10
+  failurePolicy: Fail
+  reinvocationPolicy: Never
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    {{- if not .Values.webhook.certManager.enabled }}
+    caBundle: {{ $caCert }}
+    {{- end }}
+    service:
+      name: {{ include "cf-service-operator.fullname" . }}
+      namespace: {{ .Release.Namespace }}
+      path: /mutate-cf-cs-sap-com-v1alpha1-serviceinstance
+      port: 443
+  name: mutate.serviceinstances.cf.cs.sap.com
+  rules:
+  - apiGroups:
+    - cf.cs.sap.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - serviceinstances
+    scope: Namespaced
+  matchPolicy: Equivalent
+  sideEffects: None
+  timeoutSeconds: 10
+  failurePolicy: Fail
+  reinvocationPolicy: Never
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    {{- if not .Values.webhook.certManager.enabled }}
+    caBundle: {{ $caCert }}
+    {{- end }}
+    service:
+      name: {{ include "cf-service-operator.fullname" . }}
+      namespace: {{ .Release.Namespace }}
+      path: /mutate-cf-cs-sap-com-v1alpha1-servicebinding
+      port: 443
+  name: mutate.servicebindings.cf.cs.sap.com
+  rules:
+  - apiGroups:
+    - cf.cs.sap.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - servicebindings
+    scope: Namespaced
+  matchPolicy: Equivalent
+  sideEffects: None
+  timeoutSeconds: 10
+  failurePolicy: Fail
+  reinvocationPolicy: Never
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
-  name: {{ include "cf-service-operator.fullname" . }}-validate
+  name: {{ include "cf-service-operator.fullname" . }}
   labels:
     {{- include "cf-service-operator.labels" . | nindent 4 }}
   {{- if .Values.webhook.certManager.enabled }}
@@ -191,8 +207,8 @@ webhooks:
       name: {{ include "cf-service-operator.fullname" . }}
       namespace: {{ .Release.Namespace }}
       path: /validate-cf-cs-sap-com-v1alpha1-clusterspace
-  failurePolicy: Fail
-  name: validate-clusterspace.cf.cs.sap.com
+      port: 443
+  name: validate.clusterspaces.cf.cs.sap.com
   rules:
   - apiGroups:
     - cf.cs.sap.com
@@ -201,58 +217,14 @@ webhooks:
     operations:
     - CREATE
     - UPDATE
+    - DELETE
     resources:
     - clusterspaces
+    scope: Cluster
+  matchPolicy: Equivalent
   sideEffects: None
   timeoutSeconds: 10
-- admissionReviewVersions:
-  - v1
-  clientConfig:
-    {{- if not .Values.webhook.certManager.enabled }}
-    caBundle: {{ $caCert }}
-    {{- end }}
-    service:
-      name: {{ include "cf-service-operator.fullname" . }}
-      namespace: {{ .Release.Namespace }}
-      path: /validate-cf-cs-sap-com-v1alpha1-servicebinding
   failurePolicy: Fail
-  name: validate-servicebinding.cf.cs.sap.com
-  rules:
-  - apiGroups:
-    - cf.cs.sap.com
-    apiVersions:
-    - v1alpha1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - servicebindings
-  sideEffects: None
-  timeoutSeconds: 10
-- admissionReviewVersions:
-  - v1
-  clientConfig:
-    {{- if not .Values.webhook.certManager.enabled }}
-    caBundle: {{ $caCert }}
-    {{- end }}
-    service:
-      name: {{ include "cf-service-operator.fullname" . }}
-      namespace: {{ .Release.Namespace }}
-      path: /validate-cf-cs-sap-com-v1alpha1-serviceinstance
-  failurePolicy: Fail
-  name: validate-serviceinstance.cf.cs.sap.com
-  rules:
-  - apiGroups:
-    - cf.cs.sap.com
-    apiVersions:
-    - v1alpha1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - serviceinstances
-  sideEffects: None
-  timeoutSeconds: 10
 - admissionReviewVersions:
   - v1
   clientConfig:
@@ -263,8 +235,8 @@ webhooks:
       name: {{ include "cf-service-operator.fullname" . }}
       namespace: {{ .Release.Namespace }}
       path: /validate-cf-cs-sap-com-v1alpha1-space
-  failurePolicy: Fail
-  name: validate-space.cf.cs.sap.com
+      port: 443
+  name: validate.spaces.cf.cs.sap.com
   rules:
   - apiGroups:
     - cf.cs.sap.com
@@ -273,7 +245,67 @@ webhooks:
     operations:
     - CREATE
     - UPDATE
+    - DELETE
     resources:
     - spaces
+    scope: Namespaced
+  matchPolicy: Equivalent
   sideEffects: None
   timeoutSeconds: 10
+  failurePolicy: Fail
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    {{- if not .Values.webhook.certManager.enabled }}
+    caBundle: {{ $caCert }}
+    {{- end }}
+    service:
+      name: {{ include "cf-service-operator.fullname" . }}
+      namespace: {{ .Release.Namespace }}
+      path: /validate-cf-cs-sap-com-v1alpha1-serviceinstance
+      port: 443
+  name: validate.serviceinstances.cf.cs.sap.com
+  rules:
+  - apiGroups:
+    - cf.cs.sap.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    - DELETE
+    resources:
+    - serviceinstances
+    scope: Namespaced
+  matchPolicy: Equivalent
+  sideEffects: None
+  timeoutSeconds: 10
+  failurePolicy: Fail
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    {{- if not .Values.webhook.certManager.enabled }}
+    caBundle: {{ $caCert }}
+    {{- end }}
+    service:
+      name: {{ include "cf-service-operator.fullname" . }}
+      namespace: {{ .Release.Namespace }}
+      path: /validate-cf-cs-sap-com-v1alpha1-servicebinding
+      port: 443
+  name: validate.servicebindings.cf.cs.sap.com
+  rules:
+  - apiGroups:
+    - cf.cs.sap.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    - DELETE
+    resources:
+    - servicebindings
+    scope: Namespaced
+  matchPolicy: Equivalent
+  sideEffects: None
+  timeoutSeconds: 10
+  failurePolicy: Fail

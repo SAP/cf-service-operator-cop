@@ -47,10 +47,6 @@ resources:
     memory: 20Mi
     # -- CPU request
     cpu: 0.01
-
-# -- Enable SAP binding metadata (per default, can be overridden by annotation per binding object)
-enableSapBindingMetadata: false
-
 webhook:
   certManager:
     # -- Whether to use cert-manager to manage webhook tls
@@ -61,3 +57,6 @@ webhook:
     issuerKind: ""
     # -- Issuer name (only relevant if enabled is true; if unset, a self-signed issuer is used)
     issuerName: ""
+
+# -- Enable SAP binding metadata (per default, can be overridden by annotation per binding object)
+enableSapBindingMetadata: false
