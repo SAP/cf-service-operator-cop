@@ -87,7 +87,7 @@ jobs:
           fi
           head -n $boilerplate_linecount $f > $tempdir/out
           if ! diff -q $tempdir/out $boilerplate >/dev/null; then
-            >&1 echo "Error: incorrect license header: $f."
+            >&1 echo "Error: incorrect license header found in $f."
             errors=$((errors+1))
           fi
           rm -f $tempdir/out
