@@ -23,6 +23,7 @@ env:
   TAG_PREFIX: v
   INITIAL_TAG: v0.1.0
   SEMVER_VERSION: 3.4.0
+  CHART_DIRECTORY: chart
 
 defaults:
   run:
