@@ -97,6 +97,27 @@ jobs:
         echo "Target tag: $tag."
         echo "tag=$tag" >> $GITHUB_OUTPUT
 
+    - name: Update chart version and appVersion
+      run: |
+        current_chart_version=$(yq .version $CHART_DIRECTORY/Chart.yaml)
+        current_app_version=$(yq .appVersion $CHART_DIRECTORY/Chart.yaml)
+        target_chart_version=${{ steps.get_target_release.outputs.tag }}
+        target_app_version=${{ steps.get_target_release.outputs.tag }}
+
+        echo "Updating $CHART_DIRECTORY/Chart.yaml from $current_chart_version to $target_chart_version."
+        perl -pi -e "s#^version:.*#version: $target_chart_version#g" $CHART_DIRECTORY/Chart.yaml
+        perl -pi -e "s#^appVersion:.*#appVersion: $target_app_version#g" $CHART_DIRECTORY/Chart.yaml
+
+        if [ -z "$(git status --porcelain)" ]; then
+          echo "Nothing has changed; skipping commit/push."
+        else
+          git config user.name "${{ vars.WORKFLOW_USER_NAME }}"
+          git config user.email "${{ vars.WORKFLOW_USER_EMAIL }}"
+          git add -A
+          git commit -m "Bump chart/app version from $current_chart_version/$current_app_version to $target_chart_version/$target_app_version"
+          git push
+        fi
+
     - name: Determine target commit
       id: get_target_commit
       run: |
