@@ -1,4 +1,4 @@
-name: Publish Docker
+name: Publish artifacts
 
 on:
   release:
@@ -7,16 +7,15 @@ on:
   push:
     branches:
     - main
-    paths-ignore:
-    - README.md
 
   pull_request:
     branches:
     - main
-    paths-ignore:
-    - README.md
+
+concurrency: publish
 
 env:
+  REGCTL_VERSION: v0.4.8
   REGISTRY: ghcr.io
 
 defaults:
@@ -25,6 +24,7 @@ defaults:
 
 jobs:
   test:
+    name: Run tests
     runs-on: ubuntu-22.04
 
     steps:
@@ -63,10 +63,10 @@ jobs:
           exit 0
         fi
         if diff -q $boilerplate $tempdir/boilerplate-last-year >/dev/null; then
-          >&1 echo "WARNING: license boilerplate outdated ($last_year); next year, this will result in an error."
+          >&1 echo "Warning: license boilerplate outdated ($last_year); next year, this will result in an error."
           exit 0
         fi
-        >&1 echo "ERROR: incorrect license boilerplate"
+        >&1 echo "Error: incorrect license boilerplate."
         exit 1
         END
 
@@ -86,7 +86,7 @@ jobs:
           fi
           head -n $boilerplate_linecount $f > $tempdir/out
           if ! diff -q $tempdir/out $boilerplate >/dev/null; then
-            echo "ERROR: incorrect license header: $f"
+            >&1 echo "Error: incorrect license header: $f."
             errors=$((errors+1))
           fi
           rm -f $tempdir/out
@@ -102,10 +102,10 @@ jobs:
         echo "Running 'git status' ..."
         git status --porcelain | tee status.out
         if [[ -s status.out ]]; then
-          echo "Generated artifacts are not up-to-date; probably 'make generate' was not run before committing"
+          >&1 echo "Generated artifacts are not up-to-date; probably 'make generate' was not run before committing."
           exit 1
         else
-          echo "Generated artifacts are up-to-date"
+          echo "Generated artifacts are up-to-date."
         fi
 
     - name: Check that manifests are up-to-date
@@ -114,13 +114,14 @@ jobs:
         echo "Running 'git status' ..."
         git status --porcelain | tee status.out
         if [[ -s status.out ]]; then
-          echo "Manifests are not up-to-date; probably 'make manifests' was not run before committing"
+          >&1 echo "Manifests are not up-to-date; probably 'make manifests' was not run before committing."
           exit 1
         else
-          echo "Manifests are up-to-date"
+          echo "Manifests are up-to-date."
         fi
 
-  build:
+  build-docker:
+    name: Build Docker image
     runs-on: ubuntu-22.04
     needs: test
     permissions:
@@ -130,39 +131,40 @@ jobs:
       IMAGE_NAME: ${{ github.repository }}
 
     steps:
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-
     - name: Checkout repository
       uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
 
     - name: Log in to the Container registry
       uses: docker/login-action@v2
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ github.token }}
 
     - name: Prepare custom labels for Docker
+      id: labels
       run: |
-        echo "LABELS<<EOF" >> $GITHUB_ENV
+        echo "labels<<EOF" >> $GITHUB_OUTPUT
         for c in pkg/operator/data/charts/*/Chart.yaml; do
           name=$(yq .name $c)
           version=$(yq .version $c)
           app_version=$(yq .appVersion $c)
-          echo "com.sap.cs.image.content.charts.$name.version=$version" >> $GITHUB_ENV
+          echo "com.sap.cs.image.content.charts.$name.version=$version" >> $GITHUB_OUTPUT
           if [ ! -z "$app_version" ]; then
-             echo "com.sap.cs.image.content.charts.$name.app-version=$app_version" >> $GITHUB_ENV
+             echo "com.sap.cs.image.content.charts.$name.app-version=$app_version" >> $GITHUB_OUTPUT
           fi
         done
-        echo "EOF" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_OUTPUT
 
     - name: Extract metadata (tags, labels) for Docker
       id: meta
       uses: docker/metadata-action@v4
       with:
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-        labels: ${{ env.LABELS }}
+        labels: ${{ steps.labels.outputs.labels }}
 
     - name: Build Docker image
       uses: docker/build-push-action@v4
@@ -180,3 +182,38 @@ jobs:
         push: ${{ github.event_name == 'release' }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+
+  build-crds:
+    name: Build CRD image
+    runs-on: ubuntu-22.04
+    needs: test
+    if: github.event_name == 'release'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Setup regctl
+      uses: regclient/actions/regctl-installer@main
+      with:
+        release: ${{ env.REGCTL_VERSION }}
+        install-dir: ${{ runner.temp }}/bin
+
+    - name: Log in to the registry
+      # regctl-login action is currently broken ...
+      # uses: regclient/actions/regctl-login@main
+      # with:
+      #   registry: ${{ env.REGISTRY }}
+      #   username: ${{ github.actor }}
+      #   password: ${{ github.token }}
+      run: |
+        regctl registry login $REGISTRY --user ${{ github.actor }} --pass-stdin <<< ${{ github.token }}
+
+    - name: Build artifact
+      run: |
+        cd crds
+        repository=${{ github.repository }}/crds
+        tar cvz * | regctl artifact put -m application/gzip $REGISTRY/${repository,,}:${{ github.event.release.tag_name }}
