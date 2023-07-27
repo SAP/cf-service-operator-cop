@@ -38,19 +38,28 @@ spec:
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if .Values.topologySpreadConstraints }}
+      {{- with .Values.topologySpreadConstraints }}
       topologySpreadConstraints:
-      {{- toYaml .Values.topologySpreadConstraints | trim | nindent 6 }}
+      {{- range . }}
+      - {{ toYaml . | trim | nindent 8 }}
+        {{- if not .labelSelector }}
+        labelSelector:
+          matchLabels:
+            {{- include "cf-service-operator.selectorLabels" $ | nindent 12 }}
+        {{- end }}
+      {{- end }}
       {{- else }}
       topologySpreadConstraints:
       - maxSkew: 1
         topologyKey: kubernetes.io/hostname
+        nodeTaintsPolicy: Honor
         whenUnsatisfiable: {{ .Values.defaultHostNameSpreadPolicy  }}
         labelSelector:
           matchLabels:
             {{- include "cf-service-operator.selectorLabels" . | nindent 12 }}
       - maxSkew: 1
         topologyKey: topology.kubernetes.io/zone
+        nodeTaintsPolicy: Honor
         whenUnsatisfiable: {{ .Values.defaultZoneSpreadPolicy  }}
         labelSelector:
           matchLabels:
@@ -69,27 +78,38 @@ spec:
       - name: controller
         image: {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: webhooks
+          containerPort: 9443
+          protocol: TCP
+        - name: metrics
+          containerPort: 8080
+          protocol: TCP
+        - name: probes
+          containerPort: 8081
+          protocol: TCP
         {{- with .Values.securityContext }}
         securityContext:
           {{- toYaml . | nindent 12 }}
         {{- end }}
         resources:
           {{- toYaml .Values.resources | nindent 12 }}
-        env:
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
+        livenessProbe:
+          httpGet:
+            port: probes
+            scheme: HTTP
+            path: /healthz
+        readinessProbe:
+          httpGet:
+            port: probes
+            scheme: HTTP
+            path: /readyz
         args:
         - "--leader-elect=true"
         - "--cluster-resource-namespace={{ .Release.Namespace }}"
         {{- with .Values.enableSapBindingMetadata }}
         - "--sap-binding-metadata"
         {{- end }}
-        ports:
-        - containerPort: 9443
-          name: webhook-server
-          protocol: TCP
         volumeMounts:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: tls

@@ -14,6 +14,8 @@ image:
   pullPolicy: IfNotPresent
 # -- Image pull secrets
 imagePullSecrets: []
+# -- Node selector
+nodeSelector: {}
 # -- Affinity settings
 affinity: {}
 # -- Topology spread constraints (if unspecified, default constraints for hostname and zone will be generated)
@@ -22,8 +24,6 @@ topologySpreadConstraints: []
 defaultHostNameSpreadPolicy: ScheduleAnyway
 # -- Default topology spread policy for zone
 defaultZoneSpreadPolicy: ScheduleAnyway
-# -- Node selector
-nodeSelector: {}
 # -- Tolerations
 tolerations: []
 # -- Priority class

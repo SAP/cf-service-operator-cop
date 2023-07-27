@@ -9,7 +9,7 @@ spec:
   ports:
     - port: 443
       protocol: TCP
-      targetPort: webhook-server
+      targetPort: webhooks
       name: https
   selector:
     {{- include "cf-service-operator.selectorLabels" . | nindent 4 }}
