@@ -1,6 +1,6 @@
 module github.com/sap/cf-service-operator-cop
 
-go 1.21.5
+go 1.21.6
 
 require (
 	github.com/pkg/errors v0.9.1
