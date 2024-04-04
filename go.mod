@@ -1,10 +1,10 @@
 module github.com/sap/cf-service-operator-cop
 
-go 1.22.1
+go 1.22.2
 
 require (
 	github.com/pkg/errors v0.9.1
-	github.com/sap/component-operator-runtime v0.3.15
+	github.com/sap/component-operator-runtime v0.3.17
 	k8s.io/apiextensions-apiserver v0.29.3
 	k8s.io/apimachinery v0.29.3
 	k8s.io/client-go v0.29.3
