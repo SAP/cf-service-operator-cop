@@ -11,5 +11,9 @@ spec:
       protocol: TCP
       targetPort: webhooks
       name: https
+    - name: metrics
+      port: 8080
+      protocol: TCP
+      targetPort: metrics
   selector:
     {{- include "cf-service-operator.selectorLabels" . | nindent 4 }}
