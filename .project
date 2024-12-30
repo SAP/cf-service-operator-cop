@@ -10,7 +10,8 @@ kind: CFServiceOperator
 kubernetesVersion: v0.27.2
 mutatingWebhookEnabled: false
 operatorName: cf-service-operator-cop.cs.sap.com
-owner: SAP SE
+owner: SAP SE or an SAP affiliate company and cf-service-operator-cop contributors
 resource: cfserviceoperators
+spdxLicenseHeaders: true
 validatingWebhookEnabled: false
 version: v0.1.4
