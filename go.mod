@@ -1,17 +1,17 @@
 module github.com/sap/cf-service-operator-cop
 
-go 1.23.5
+go 1.23.6
 
 require (
 	github.com/pkg/errors v0.9.1
-	github.com/sap/component-operator-runtime v0.3.67
+	github.com/sap/component-operator-runtime v0.3.68
 	k8s.io/apiextensions-apiserver v0.32.1
 	k8s.io/apimachinery v0.32.1
 	k8s.io/client-go v0.32.1
 	k8s.io/code-generator v0.32.1
 	k8s.io/kube-aggregator v0.32.1
 	sigs.k8s.io/controller-runtime v0.20.1
-	sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20241227172013-a9b7c2dd8a97
+	sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20250203100659-bbc9711d9b2d
 	sigs.k8s.io/controller-tools v0.16.5
 )
 
@@ -61,22 +61,22 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	github.com/sap/go-generics v0.2.25 // indirect
+	github.com/sap/go-generics v0.2.26 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
-	github.com/spf13/afero v1.6.0 // indirect
+	github.com/spf13/afero v1.12.0 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
 	github.com/spf13/cobra v1.8.1 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/net v0.33.0 // indirect
-	golang.org/x/oauth2 v0.23.0 // indirect
+	golang.org/x/oauth2 v0.25.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
-	golang.org/x/term v0.27.0 // indirect
+	golang.org/x/sys v0.29.0 // indirect
+	golang.org/x/term v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.9.0 // indirect
 	golang.org/x/tools v0.28.0 // indirect
