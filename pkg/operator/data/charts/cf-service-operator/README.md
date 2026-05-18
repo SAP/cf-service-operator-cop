@@ -1,6 +1,6 @@
 # cf-service-operator
 
-![Version: 0.5.22](https://img.shields.io/badge/Version-0.5.22-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.5.15](https://img.shields.io/badge/AppVersion-v0.5.15-informational?style=flat-square)
+![Version: 0.5.23](https://img.shields.io/badge/Version-0.5.23-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.5.16](https://img.shields.io/badge/AppVersion-v0.5.16-informational?style=flat-square)
 
 A Helm chart for https://github.com/sap/cf-service-operator
 
