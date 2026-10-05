@@ -47,6 +47,8 @@ resources:
     memory: 20Mi
     # -- CPU request
     cpu: 0.01
+dnsPolicy: ClusterFirst
+hostNetwork: false
 pdb:
   # -- Whether to create a PodDisruptionBudget for the webhook
   enabled: true
